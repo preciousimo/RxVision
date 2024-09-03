@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useLayoutEffect } from "react";
 import Sidebar from "@/components/Sidebar";
-import { useSession } from "next-auth/react";
+import Header from "@/components/Header";
 import { useRouter, usePathname } from "next/navigation";
 
 export default function DefaultLayout({
@@ -35,7 +35,8 @@ export default function DefaultLayout({
 
         <div className="relative flex flex-1 flex-col lg:ml-72.5">
           {/* Header */}
-
+          <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+          
           <main>
             <div className="mx-auto max-w-screen-2xl p-4 dark:bg-[#121212] md:p-6 2xl:p-10">
               {children}
