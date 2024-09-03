@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                         Int                      @id @default(autoincrement())
+  email                      String                   @unique
+  fullname                   String?
+  photo                      String
+  firstName                  String?
+  lastName                   String?
+  password                   String
+  isEmailVerified            Boolean                  @default(false)
+  userBio                    String                   @default("")
+  verificationToken          String?
+  verificationExpires        DateTime?
+  resetPasswordToken         String?
+  resetPasswordExpires       DateTime?
+  createdAt                  DateTime                 @default(now())
+  updatedAt                  DateTime                 @updatedAt
+
+  groupsCreated              Group[]                  @relation("CreatedGroups")
+  groups                     Group[]                  @relation("GroupMembers")
+  messages                   Message[]
+  moleculeGenerationHistories MoleculeGenerationHistory[]
+
+  @@map("users") // Optional: Specify a custom table name in the database
+}
+
+model Group {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  createdAt   DateTime  @default(now())
+  createdById Int
+  createdBy   User      @relation("CreatedGroups", fields: [createdById], references: [id])
+  members     User[]    @relation("GroupMembers")
+  messages    Message[]
+
+  @@map("groups") // Optional: Specify a custom table name in the database
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  text       String
+  timestamp  DateTime @default(now())
+  senderId   Int
+  groupId    Int
+  sender     User     @relation(fields: [senderId], references: [id])
+  group      Group    @relation(fields: [groupId], references: [id])
+
+  @@map("messages") // Optional: Specify a custom table name in the database
+}
+
+model MoleculeGenerationHistory {
+  id                 Int                       @id @default(autoincrement())
+  smiles             String
+  numMolecules       Int
+  minSimilarity      Float
+  particles          Int
+  iterations         Int
+  generatedMolecules GeneratedMolecule[]
+  userId             Int
+  user               User                      @relation(fields: [userId], references: [id])
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  @@map("molecule_generation_histories") // Optional: Specify a custom table name in the database
+}
+
+model GeneratedMolecule {
+  id                        Int                       @id @default(autoincrement())
+  structure                 String
+  score                     Float
+  moleculeGenerationHistory MoleculeGenerationHistory @relation(fields: [moleculeGenerationHistoryId], references: [id])
+  moleculeGenerationHistoryId Int
+
+  @@map("generated_molecules") // Optional: Specify a custom table name in the database
+}
