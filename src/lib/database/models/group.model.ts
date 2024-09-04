@@ -15,11 +15,11 @@ export async function createGroup(data: {
             members: { connect: data.members.map(id => ({ id })) },
             messages: data.messages
                 ? {
-                      create: data.messages.map(message => ({
-                          sender: { connect: { id: message.senderId } },
-                          text: message.text,
-                      })),
-                  }
+                    create: data.messages.map(message => ({
+                        sender: { connect: { id: message.senderId } },
+                        text: message.text,
+                    })),
+                }
                 : undefined,
         },
         include: { members: true, messages: true },

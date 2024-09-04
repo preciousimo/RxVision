@@ -1,6 +1,9 @@
 import { PrismaClient } from '@prisma/client';
+import { handleError } from '@/lib/utils';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
+
 
 export async function createUser(data: {
     email: string;
@@ -9,15 +12,24 @@ export async function createUser(data: {
     lastName?: string;
     photo: string;
 }) {
-    return await prisma.user.create({
-        data: {
-            email: data.email,
-            password: data.password,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            photo: data.photo,
-        },
-    });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(data.password, salt);
+    try {
+        const user = await prisma.user.create({
+            data: {
+                email: data.email,
+                password: hashedPassword,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                photo: data.photo,
+                userBio: "",
+                createdAt: new Date(),
+            },
+        });
+        return user;
+    } catch (error) {
+        throw handleError(error);
+    }
 }
 
 export async function getUserByEmail(email: string) {

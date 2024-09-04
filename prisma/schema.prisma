@@ -17,15 +17,16 @@ model User {
   id                         Int                      @id @default(autoincrement())
   email                      String                   @unique
   fullname                   String?
-  photo                      String
+  photo                      String?                  // Made optional
   firstName                  String?
   lastName                   String?
   password                   String
   isEmailVerified            Boolean                  @default(false)
   userBio                    String                   @default("")
-  verificationToken          String?
+  creditBalance              Int                      @default(0)
+  verificationToken          String?                  @unique
   verificationExpires        DateTime?
-  resetPasswordToken         String?
+  resetPasswordToken         String?                  @unique
   resetPasswordExpires       DateTime?
   createdAt                  DateTime                 @default(now())
   updatedAt                  DateTime                 @updatedAt
@@ -35,7 +36,7 @@ model User {
   messages                   Message[]
   moleculeGenerationHistories MoleculeGenerationHistory[]
 
-  @@map("users") // Optional: Specify a custom table name in the database
+  @@map("users")
 }
 
 model Group {
@@ -47,7 +48,7 @@ model Group {
   members     User[]    @relation("GroupMembers")
   messages    Message[]
 
-  @@map("groups") // Optional: Specify a custom table name in the database
+  @@map("groups")
 }
 
 model Message {
@@ -59,7 +60,7 @@ model Message {
   sender     User     @relation(fields: [senderId], references: [id])
   group      Group    @relation(fields: [groupId], references: [id])
 
-  @@map("messages") // Optional: Specify a custom table name in the database
+  @@map("messages")
 }
 
 model MoleculeGenerationHistory {
@@ -75,7 +76,7 @@ model MoleculeGenerationHistory {
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
 
-  @@map("molecule_generation_histories") // Optional: Specify a custom table name in the database
+  @@map("molecule_generation_histories")
 }
 
 model GeneratedMolecule {
@@ -85,5 +86,5 @@ model GeneratedMolecule {
   moleculeGenerationHistory MoleculeGenerationHistory @relation(fields: [moleculeGenerationHistoryId], references: [id])
   moleculeGenerationHistoryId Int
 
-  @@map("generated_molecules") // Optional: Specify a custom table name in the database
+  @@map("generated_molecules")
 }
