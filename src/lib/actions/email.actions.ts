@@ -1,151 +1,63 @@
 "use server";
 
-import { PrismaClient } from '@prisma/client';
 import { handleError } from "../utils";
 
-const prisma = new PrismaClient();
-
-export async function createGroup(
-  groupName: string,
-  creatorId: number,
-  memberIds: number[] = [],
+export async function sendVerificationEmail(
+  email: string,
+  firstName: string,
+  verificationUrl: string,
 ) {
   try {
-    const newGroup = await prisma.group.create({
-      data: {
-        name: groupName,
-        createdBy: { connect: { id: creatorId } },
-        members: {
-          connect: memberIds.map((id) => ({ id })),
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/send-verification-email`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ email, firstName, verificationUrl }),
       },
-      include: {
-        members: true,
-        createdBy: true,
-      },
-    });
+    );
 
-    return newGroup;
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to send verification email");
+    }
+
+    return data;
   } catch (error) {
-    console.error("Error creating group:", error);
+    console.error("Error sending verification email:", error);
     handleError(error);
   }
 }
 
-export async function addMemberToGroup(groupId: number, userId: number) {
-  try {
-    const updatedGroup = await prisma.group.update({
-      where: { id: groupId },
-      data: {
-        members: {
-          connect: { id: userId },
-        },
-      },
-      include: {
-        members: true,
-      },
-    });
-
-    return updatedGroup;
-  } catch (error) {
-    console.error("Error adding member to group:", error);
-    handleError(error);
-  }
-}
-
-export async function addMessageToGroup(
-  groupId: number,
-  userId: number,
-  text: string,
+export async function sendResetPasswordEmail(
+  email: string,
+  firstName: string,
+  resetUrl: string,
 ) {
   try {
-    const updatedGroup = await prisma.group.update({
-      where: { id: groupId },
-      data: {
-        messages: {
-          create: {
-            sender: { connect: { id: userId } },
-            text,
-          },
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/send-reset-password-email`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ email, firstName, resetUrl }),
       },
-      include: {
-        messages: {
-          include: {
-            sender: true,
-          },
-        },
-      },
-    });
+    );
 
-    return updatedGroup;
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to send reset password email");
+    }
+
+    return data;
   } catch (error) {
-    console.error("Error adding message to group:", error);
-    handleError(error);
-  }
-}
-
-export async function getGroupById(groupId: number) {
-  try {
-    const group = await prisma.group.findUnique({
-      where: { id: groupId },
-      include: {
-        members: true,
-        messages: {
-          include: {
-            sender: true,
-          },
-        },
-        createdBy: true,
-      },
-    });
-    if (!group) throw new Error("Group not found");
-
-    return group;
-  } catch (error) {
-    console.error("Error retrieving group:", error);
-    handleError(error);
-  }
-}
-
-export async function getAllGroups() {
-  try {
-    const groups = await prisma.group.findMany({
-      include: {
-        members: true,
-        messages: {
-          include: {
-            sender: true,
-          },
-        },
-        createdBy: true,
-      },
-    });
-
-    return groups;
-  } catch (error) {
-    console.error("Error retrieving groups:", error);
-    handleError(error);
-  }
-}
-
-export async function getGroupMessages(groupId: number) {
-  try {
-    const group = await prisma.group.findUnique({
-      where: { id: groupId },
-      include: {
-        messages: {
-          include: {
-            sender: true,
-          },
-        },
-      },
-    });
-    if (!group) throw new Error("Group not found");
-
-    return group.messages;
-  } catch (error) {
-    console.error("Error retrieving group messages:", error);
+    console.error("Error sending reset password email:", error);
     handleError(error);
   }
 }
