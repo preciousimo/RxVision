@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import ClickOutside from "../ClickOutside";
 import { MessageCircleMore } from "lucide-react";
 
 const DropdownMessage = () => {
@@ -8,6 +9,7 @@ const DropdownMessage = () => {
   const [notifying, setNotifying] = useState(true);
 
   return (
+    <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
       <li className="relative">
         <Link
           onClick={() => {
@@ -27,6 +29,7 @@ const DropdownMessage = () => {
           <MessageCircleMore size={20} />
         </Link>
       </li>
+    </ClickOutside>
   );
 };
 

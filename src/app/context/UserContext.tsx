@@ -10,11 +10,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     firstName: string;
     lastName: string;
     photo: string;
+    jobTitle: string;
     userBio: string;
   }>({
     firstName: "John",
     lastName: "Doe",
     photo: "/images/user/user-01.png",
+    jobTitle: "Drug Researcher",
     userBio: "",
   });
 
@@ -27,6 +29,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             firstName: fetchedUser?.firstName || "John",
             lastName: fetchedUser?.lastName || "Doe",
             photo: fetchedUser?.photo || "/images/user/user-01.png",
+            jobTitle: fetchedUser?.jobTitle || "Researcher",
             userBio: fetchedUser?.userBio || "",
           });
         } catch (error) {
