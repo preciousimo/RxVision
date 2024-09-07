@@ -1,9 +1,10 @@
 "use server";
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client/edge'
+import { withAccelerate } from '@prisma/extension-accelerate'
 import { handleError } from "../utils";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient().$extends(withAccelerate())
 
 export async function createMoleculeGenerationHistory(
   payload: MoleculeGenerationHistoryType,

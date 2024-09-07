@@ -1,14 +1,12 @@
 "use server";
-import { neon } from "@neondatabase/serverless";
+import { PrismaClient } from '@prisma/client/edge'
+import { withAccelerate } from '@prisma/extension-accelerate'
+
+const prisma = new PrismaClient().$extends(withAccelerate())
 
 export async function getData() {
     try {
-        const databaseUrl = process.env.DATABASE_URL;
-        if (!databaseUrl) {
-            throw new Error("DATABASE_URL is not defined");
-        }
-        const sql = neon(databaseUrl);
-        const data = await sql`...`;
+        const data = await prisma.$queryRaw`...`; // Your query here
         return data;
     } catch (error) {
         console.error("Error fetching data:", error);

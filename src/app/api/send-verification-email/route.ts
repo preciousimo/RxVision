@@ -5,6 +5,10 @@ const resend = new Resend(process.env.RESEND_KEY);
 export async function POST(request: Request) {
   const { firstName, email, verificationUrl } = await request.json();
 
+  if (!verificationUrl) {
+    return new Response(JSON.stringify({ error: "Verification URL missing" }), { status: 400 });
+  }
+
   try {
     const { data, error } = await resend.emails.send({
       from: "RxVision <onboarding@resend.dev>",
@@ -14,16 +18,13 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      console.log(error);
+      console.error(error);
       return new Response(JSON.stringify({ error }), { status: 500 });
     }
 
     return new Response(JSON.stringify(data), { status: 200 });
   } catch (error: any) {
-    console.log(error);
-
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-    });
+    console.error(error);
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }

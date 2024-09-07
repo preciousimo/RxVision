@@ -1,15 +1,20 @@
-export const handleError = (error: unknown) => {
+export function handleError(error: unknown) {
   if (error instanceof Error) {
-    console.error(error.message);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
     throw new Error(`Error: ${error.message}`);
   } else if (typeof error === "string") {
-    console.error(error);
+    console.error("Error string:", error);
     throw new Error(`Error: ${error}`);
+  } else if (typeof error === "object" && error !== null) {
+    console.error("Error object:", JSON.stringify(error, null, 2));
+    throw new Error(`Error: ${JSON.stringify(error)}`);
   } else {
-    console.error(error);
-    throw new Error(`Unknown error: ${JSON.stringify(error)}`);
+    console.error("Unknown error type:", error);
+    throw new Error("An unknown error occurred");
   }
-};
+}
+
 
 export const resizeBase64Img = (
   base64Str: any,

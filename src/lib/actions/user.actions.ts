@@ -2,15 +2,12 @@
 
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from 'uuid';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client/edge'
 import { handleError } from "../utils";
 import { sendVerificationEmail, sendResetPasswordEmail } from "./email.actions";
+import { withAccelerate } from '@prisma/extension-accelerate'
 
-const prisma = new PrismaClient();
-
-function generateToken() {
-    return uuidv4();
-}
+const prisma = new PrismaClient().$extends(withAccelerate())
 
 export async function createUser(user: CreateUserParams) {
     try {
@@ -24,6 +21,7 @@ export async function createUser(user: CreateUserParams) {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(user.password, salt);
 
+        // First, create the user without verification info
         const newUser = await prisma.user.create({
             data: {
                 ...user,
@@ -32,12 +30,14 @@ export async function createUser(user: CreateUserParams) {
             },
         });
 
-        const verificationToken = generateToken(); // Implement this function
+        // Now, generate the verification token
+        const verificationToken = uuidv4();
         const verificationUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/verify-email?token=${verificationToken}`;
-        
+
+        // Update the user with the verification info
         await prisma.user.update({
             where: { id: newUser.id },
-            data: { 
+            data: {
                 verificationToken,
                 verificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
             }
@@ -78,26 +78,73 @@ export async function loginUser(email: string, password: string) {
 
 export async function verifyEmail(token: string) {
     try {
+        console.log("Verifying token:", token);
+
+        // Validate token format
+        if (!isValidUUID(token)) {
+            return { status: 'invalid_format', message: "Invalid token format" };
+        }
+
         const user = await prisma.user.findUnique({
             where: { verificationToken: token },
         });
-        if (!user) throw new Error("Invalid token or user not found");
+
+        if (!user) {
+            console.log("User not found for token:", token);
+            return { status: 'not_found', message: "Invalid token or user not found" };
+        }
+
+        console.log("User found:", user);
+
+        // Check if the verification token has expired
         if (user.verificationExpires && user.verificationExpires < new Date()) {
-            throw new Error("Verification token has expired");
+            return { status: 'expired', message: "Verification token has expired" };
         }
 
         const updatedUser = await prisma.user.update({
             where: { id: user.id },
-            data: { 
+            data: {
                 isEmailVerified: true,
                 verificationToken: null,
-                verificationExpires: null
+                verificationExpires: null,
             },
         });
 
-        return updatedUser;
+        console.log("User verified successfully:", updatedUser);
+        return { status: 'success', message: "Email verified successfully" };
+
     } catch (error) {
-        handleError(error);
+        console.error("Verification error:", error);
+        return { status: 'error', message: "An unknown error occurred during verification" };
+    }
+}
+
+function isValidUUID(uuid: string) {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(uuid);
+}
+
+export async function checkIfAlreadyVerified(token: string) {
+    try {
+        // First, try to find a user with this token
+        const user = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { verificationToken: token },
+                    { resetPasswordToken: token }
+                ]
+            }
+        });
+
+        if (!user) {
+            return false; // No user found with this token
+        }
+
+        // Check if the user is already verified
+        return user.isEmailVerified;
+    } catch (error) {
+        console.error("Error checking verification status:", error);
+        return false; // Assume not verified in case of error
     }
 }
 

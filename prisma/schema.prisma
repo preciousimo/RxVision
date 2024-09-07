@@ -17,11 +17,12 @@ model User {
   id                         Int                      @id @default(autoincrement())
   email                      String                   @unique
   fullname                   String?
-  photo                      String?                  // Made optional
+  photo                      String?
   firstName                  String?
   lastName                   String?
   password                   String
   isEmailVerified            Boolean                  @default(false)
+  jobTitle                   String?
   userBio                    String                   @default("")
   creditBalance              Int                      @default(0)
   verificationToken          String?                  @unique
